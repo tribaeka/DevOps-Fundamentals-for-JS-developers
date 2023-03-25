@@ -117,11 +117,11 @@ else
     ESCAPED_BUILD_CONFIG=$(jq -nr --arg build_config "$BUILD_CONFIGURATION" '$build_config | @json')
     jq '.pipeline.version += 1' "$PIPELINE_DEFINITION_FILE" | \
     jq 'del(.metadata)' | \
-    jq --arg branch "$BRANCH" '.pipeline.stages[0].actions[0].configuration.Branch = $branch' | \
-    jq --arg owner "$OWNER" '.pipeline.stages[0].actions[0].configuration.Owner = $owner' | \
-    jq --arg repo "$REPO" '.pipeline.stages[0].actions[0].configuration.Repo = $repo' | \
-    jq --argjson poll "$POLL_FOR_SOURCE_CHANGES" '.pipeline.stages[0].actions[0].configuration.PollForSourceChanges = $poll' | \
-    jq --argjson buildconfig "$ESCAPED_BUILD_CONFIG" '.pipeline.stages[].actions[].configuration.EnvironmentVariables = "[{\"name\":\"BUILD_CONFIGURATION\",\"value\":\($buildconfig),\"type\":\"PLAINTEXT\"}]"' > "$NEW_FILENAME"
+    jq --arg branch "$BRANCH" '.pipeline.stages |= map(if .name == "Source" then .actions |= map(if .name == "Source" then .configuration.Branch = $branch else . end) else . end)' | \
+    jq --arg owner "$OWNER" '.pipeline.stages |= map(if .name == "Source" then .actions |= map(if .name == "Source" then .configuration.Owner = $owner else . end) else . end)' | \
+    jq --arg repo "$REPO" '.pipeline.stages |= map(if .name == "Source" then .actions |= map(if .name == "Source" then .configuration.Repo = $repo else . end) else . end)' | \
+    jq --argjson poll "$POLL_FOR_SOURCE_CHANGES" '.pipeline.stages |= map(if .name == "Source" then .actions |= map(if .name == "Source" then .configuration.PollForSourceChanges = $poll else . end) else . end)' | \
+    jq --argjson buildconfig "$ESCAPED_BUILD_CONFIG" '.pipeline.stages |= map(if .name == "QualityGate" or .name == "Build" then .actions |= map(if .name == "LintingAntUnitTesting" or .name == "BuildAndDeploy" then .configuration.EnvironmentVariables = "[{\"name\":\"BUILD_CONFIGURATION\",\"value\":\($buildconfig),\"type\":\"PLAINTEXT\"}]" else . end) else . end)' > "$NEW_FILENAME"
 fi
 
 echo "Created new file: $NEW_FILENAME"

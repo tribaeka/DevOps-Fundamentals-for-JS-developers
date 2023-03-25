@@ -12,7 +12,7 @@ if [ -f dist/client-app.zip ]; then
     rm dist/client-app.zip
 fi
 
-npm i
+npm ci
 
 npm run build --configuration=$ENV_CONFIGURATION
 
